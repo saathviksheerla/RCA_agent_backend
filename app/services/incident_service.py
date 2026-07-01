@@ -9,6 +9,7 @@ from app.schemas.incident import (
     IncidentDetailResponse,
     IncidentResolveRequest,
 )
+from cognee.modules.engine.operations.setup import setup
 
 _store: list[dict] = []
 _counter = 0
@@ -30,6 +31,7 @@ async def create_incident(data: IncidentCreate) -> IncidentDetailResponse:
         created_at=datetime.now(timezone.utc),
         updated_at=datetime.now(timezone.utc),
     )
+    await setup()
 
     similar_incidents = await recall_similar_incidents(incident)
     rca = await generate_rca(incident, similar_incidents)

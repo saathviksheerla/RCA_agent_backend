@@ -8,7 +8,6 @@ from fastapi import HTTPException
 from app.schemas.incident import Incident
 
 
-
 async def recall_similar_incidents(
     incident: Incident,
 ) -> list[str]:
@@ -22,6 +21,7 @@ root causes, or resolutions.
 """.strip()
     
     try:
+
         results = await cognee.recall(
             query_text=query,
             only_context=True,
