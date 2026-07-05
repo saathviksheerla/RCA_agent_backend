@@ -92,6 +92,9 @@ app/
 
 Cognee stores memory. Cognee retrieves memory. Cognee does NOT perform RCA. OpenAI reasons. Cognee provides context. one function, one responsibility, never mix them.
 
+### Architecture Diagram
+<img src="images/architecture.png" alt="Project Architecture" width="500">
+
 ## Testing examples
 
 paste these in Swagger UI at `http://localhost:8000/docs`
