@@ -1,3 +1,9 @@
+# Load .env BEFORE any app import — app.database and app.action.generate_rca read
+# env vars at module-import time, so this must run first (don't rely on Cognee
+# loading .env as a side effect).
+from dotenv import load_dotenv
+load_dotenv()
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

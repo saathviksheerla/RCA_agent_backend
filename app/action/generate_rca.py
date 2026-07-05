@@ -1,25 +1,32 @@
-
-from langchain_groq import ChatGroq
-from app.schemas.incident import Incident, RCAResponse
-import getpass
 import os
 import json
-if "LLM_API_KEY" not in os.environ:
-    os.environ["LLM_API_KEY"] = getpass.getpass("Enter your Groq API key: ")
 
+from fastapi import HTTPException
+from pydantic import ValidationError
+from langchain_openai import ChatOpenAI
+from app.schemas.incident import Incident, RCAResponse
 
-llm = ChatGroq(
-    model="openai/gpt-oss-120b",
-    api_key=os.environ["LLM_API_KEY"],
+# Track LLM_MODEL from .env; strip the "openai/" litellm prefix Cognee uses,
+# since langchain's ChatOpenAI wants the bare model name (e.g. "gpt-4o-mini").
+_model = os.getenv("LLM_MODEL", "openai/gpt-4o-mini").split("/", 1)[-1]
+
+# Fail fast with a clear message instead of hanging/crashing obscurely.
+_api_key = os.environ.get("LLM_API_KEY")
+if not _api_key:
+    raise RuntimeError("LLM_API_KEY is not set. Add it to your .env.")
+
+llm = ChatOpenAI(
+    model=_model,
+    api_key=_api_key,
     temperature=1,
-    max_tokens=None,
-    reasoning_format="parsed",
-    timeout=None,
     max_retries=2,
-    # other params...
+    # Force valid JSON so json.loads() below can't choke on stray prose/markdown.
+    model_kwargs={"response_format": {"type": "json_object"}},
 )
-async def generate_rca(incident:Incident, similar_incidents:list[str]) -> RCAResponse:
-    similar_text = ("\n".join(f"Historical Incident: {incident}" for incident in similar_incidents) or "No similar incidents found")
+
+
+async def generate_rca(incident: Incident, similar_incidents: list[str]) -> RCAResponse:
+    similar_text = ("\n".join(f"Historical Incident: {s}" for s in similar_incidents) or "No similar incidents found")
     prompt = f"""You are a Senior Cloud Reliability Engineer performing Root Cause Analysis.
 
 ##Current Incident
@@ -54,5 +61,11 @@ Return ONLY valid JSON. No markdown. No explanation."""
         {"role": "user", "content": prompt}
     ])
     raw = response.content
-    final_data = json.loads(raw)
-    return RCAResponse(**final_data)
+    try:
+        final_data = json.loads(raw)
+        return RCAResponse(**final_data)
+    except (json.JSONDecodeError, ValidationError, TypeError) as e:
+        raise HTTPException(
+            status_code=502,
+            detail="RCA generation returned an invalid response, please try again.",
+        ) from e

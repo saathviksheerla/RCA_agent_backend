@@ -8,6 +8,23 @@ DB_USERNAME = os.getenv("DB_USERNAME")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 
+# Fail fast with a clear message instead of silently building a URL full of "None".
+_missing = [
+    name
+    for name, value in (
+        ("DB_HOST", DB_HOST),
+        ("DB_USERNAME", DB_USERNAME),
+        ("DB_PASSWORD", DB_PASSWORD),
+        ("DB_NAME", DB_NAME),
+    )
+    if not value
+]
+if _missing:
+    raise RuntimeError(
+        f"Missing required database env vars: {', '.join(_missing)}. "
+        "Check that .env exists and is loaded."
+    )
+
 DATABASE_URL = f"postgresql+asyncpg://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 engine = create_async_engine(

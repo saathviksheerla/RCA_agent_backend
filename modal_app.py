@@ -7,7 +7,7 @@ image = (
     .uv_pip_install(
         "cognee[postgres]>=1.2.2",
         "fastapi>=0.138.2",
-        "langchain-groq>=1.1.3",
+        "langchain-openai>=1.3.3",
         "uvicorn[standard]>=0.49.0",
         "python-dotenv>=1.2.2",
         "psycopg2-binary>=2.9.9",

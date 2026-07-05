@@ -45,7 +45,11 @@ class RCAResponse(BaseModel):
 
     first_action: str
 
-    recalled_from: list[str]
+    # The LLM is asked to echo which historical incidents it used, but this
+    # field is DISCARDED by the service (recalled_from is rebuilt from the
+    # recall chunks via _parse_recalled). Models return it as strings OR as
+    # objects, so accept any list shape to avoid validation failures.
+    recalled_from: list = Field(default_factory=list)
 
 
 class IncidentResolveRequest(BaseModel):

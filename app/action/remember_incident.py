@@ -1,6 +1,10 @@
+import logging
+
 from cognee import cognee
-from fastapi import HTTPException
 from app.schemas.incident import Incident
+from app.perf import Timer
+
+logger = logging.getLogger(__name__)
 
 
 def incident_to_memory(incident: Incident) -> str:
@@ -21,13 +25,21 @@ Symptoms: {incident.symptoms}
     return memory
 
 
-async def remember_incident(incident: Incident) -> None:
+async def remember_incident(incident: Incident, background: bool = False) -> bool:
+    """Store the incident in Cognee's memory.
+
+    With background=True, indexing (the slow graph-extraction pipeline) runs
+    without blocking the caller. A failure here is logged, not raised: the
+    incident is already persisted in Postgres, so a memory-write failure must
+    not turn a successful create into a 500.
+    """
     memory_text = incident_to_memory(incident)
     try:
-        await cognee.remember(memory_text,self_improvement=False)
+        with Timer(f"cognee.remember(bg={background})"):
+            await cognee.remember(
+                memory_text, self_improvement=False, run_in_background=background
+            )
         return True
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to store incident in memory: {str(e)}",
-        )
+        logger.warning("Failed to store incident in memory: %s", e)
+        return False

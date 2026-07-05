@@ -8,11 +8,25 @@ dependencies = [
     "asyncpg>=0.31.0",
     "cognee[groq]>=1.2.2",
     "fastapi>=0.138.2",
-    "langchain-groq>=1.1.3",
+    "langchain-openai>=1.3.3",
     "modal>=0.70.0",
     "pgvector>=0.4.2",
     "pydantic>=2.0.0",
     "python-dotenv>=1.2.2",
     "sqlalchemy[asyncio]>=2.0.0",
     "uvicorn[standard]>=0.49.0",
+]
+
+[dependency-groups]
+test = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.27.0",
+    "aiosqlite>=0.20.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "functional: gated tests that call real Cognee Cloud + Groq (opt-in, requires live credentials)",
 ]
